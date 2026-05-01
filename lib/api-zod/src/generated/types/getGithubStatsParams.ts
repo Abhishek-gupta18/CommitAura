@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type GetGithubStatsParams = {
+  /**
+   * Optional GitHub personal access token for higher rate limits
+   */
+  token?: string;
+};

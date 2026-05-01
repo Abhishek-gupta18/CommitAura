@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: GitHub Stats API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: github
+    description: GitHub statistics operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,133 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /github/stats/{username}:
+    get:
+      operationId: getGithubStats
+      tags: [github]
+      summary: Get GitHub statistics for a user
+      description: Fetches comprehensive GitHub stats including total contributions, current streak, and longest streak
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: GitHub username
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional GitHub personal access token for higher rate limits
+      responses:
+        "200":
+          description: GitHub stats fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GithubStats"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /github/contributions/{username}:
+    get:
+      operationId: getGithubContributions
+      tags: [github]
+      summary: Get GitHub contribution calendar for a user
+      description: Fetches the full contribution calendar/heatmap data
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: GitHub username
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional GitHub personal access token
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Year to fetch contributions for (defaults to current year)
+      responses:
+        "200":
+          description: Contribution data fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContributionCalendar"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /github/profile/{username}:
+    get:
+      operationId: getGithubProfile
+      tags: [github]
+      summary: Get GitHub user profile information
+      description: Fetches basic profile info including avatar, bio, followers, etc.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+          description: GitHub username
+        - name: token
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional GitHub personal access token
+      responses:
+        "200":
+          description: Profile fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GithubProfile"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +163,147 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    ContributionDay:
+      type: object
+      properties:
+        date:
+          type: string
+          description: Date in YYYY-MM-DD format
+        count:
+          type: integer
+          description: Number of contributions on this day
+        level:
+          type: integer
+          description: Contribution intensity level (0-4)
+      required:
+        - date
+        - count
+        - level
+
+    ContributionWeek:
+      type: object
+      properties:
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContributionDay"
+      required:
+        - days
+
+    ContributionCalendar:
+      type: object
+      properties:
+        totalContributions:
+          type: integer
+          description: Total contributions in the requested period
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContributionWeek"
+        year:
+          type: integer
+          description: Year of this contribution data
+      required:
+        - totalContributions
+        - weeks
+        - year
+
+    GithubStats:
+      type: object
+      properties:
+        username:
+          type: string
+        totalContributions:
+          type: integer
+          description: Total contributions across all time (all years from account creation to now)
+        currentStreak:
+          type: integer
+          description: Current consecutive days with contributions (up to and including today)
+        longestStreak:
+          type: integer
+          description: Longest consecutive days streak ever
+        currentStreakStart:
+          type: ["string", "null"]
+          description: Start date of current streak (YYYY-MM-DD)
+        currentStreakEnd:
+          type: ["string", "null"]
+          description: End date of current streak (YYYY-MM-DD)
+        longestStreakStart:
+          type: ["string", "null"]
+          description: Start date of longest streak (YYYY-MM-DD)
+        longestStreakEnd:
+          type: ["string", "null"]
+          description: End date of longest streak (YYYY-MM-DD)
+        contributionsThisYear:
+          type: integer
+          description: Total contributions in the current year
+        accountCreatedAt:
+          type: string
+          description: Date the GitHub account was created (YYYY-MM-DD)
+        firstContributionDate:
+          type: ["string", "null"]
+          description: Date of first ever contribution (YYYY-MM-DD)
+      required:
+        - username
+        - totalContributions
+        - currentStreak
+        - longestStreak
+        - currentStreakStart
+        - currentStreakEnd
+        - longestStreakStart
+        - longestStreakEnd
+        - contributionsThisYear
+        - accountCreatedAt
+        - firstContributionDate
+
+    GithubProfile:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        avatarUrl:
+          type: string
+        followers:
+          type: integer
+        following:
+          type: integer
+        publicRepos:
+          type: integer
+        publicGists:
+          type: integer
+        createdAt:
+          type: string
+        location:
+          type: ["string", "null"]
+        blog:
+          type: ["string", "null"]
+        company:
+          type: ["string", "null"]
+        twitterUsername:
+          type: ["string", "null"]
+      required:
+        - username
+        - name
+        - bio
+        - avatarUrl
+        - followers
+        - following
+        - publicRepos
+        - publicGists
+        - createdAt
+        - location
+        - blog
+        - company
+        - twitterUsername

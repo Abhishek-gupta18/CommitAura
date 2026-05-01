@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "GitHub Stats"
+version = "1.0.0"
+id = "artifacts/github-stats"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22349
+
+[services.development]
+run = "pnpm --filter @workspace/github-stats run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/github-stats", "run", "build" ]
+publicDir = "artifacts/github-stats/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22349"
+BASE_PATH = "/"
