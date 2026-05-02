@@ -1,0 +1,23 @@
+{
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @workspace/github-stats run build",
+  "outputDirectory": "artifacts/github-stats/dist/public",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/github/card",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=3600" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
+}
